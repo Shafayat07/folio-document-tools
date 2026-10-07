@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-canvas text-ink antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  /* Visible, neutral focus treatment — no glow. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ink ring-offset-2 ring-offset-surface;
+  }
+
+  ::selection {
+    background: #dde0e4;
+  }
+
+  input[type="file"] {
+    display: none;
+  }
+}
+
+@layer components {
+  .hairline {
+    @apply border border-line;
+  }
+
+  /* Faint checkerboard for transparent image previews. */
+  .checkerboard {
+    background-image:
+      linear-gradient(45deg, #eceef0 25%, transparent 25%),
+      linear-gradient(-45deg, #eceef0 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #eceef0 75%),
+      linear-gradient(-45deg, transparent 75%, #eceef0 75%);
+    background-size: 12px 12px;
+    background-position:
+      0 0,
+      0 6px,
+      6px -6px,
+      -6px 0px;
+  }
+
+  .scrollbar-slim {
+    scrollbar-width: thin;
+    scrollbar-color: #cdd0d5 transparent;
+  }
+  .scrollbar-slim::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+  .scrollbar-slim::-webkit-scrollbar-thumb {
+    background: #cdd0d5;
+    border-radius: 4px;
+  }
+  .scrollbar-slim::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer utilities {
+  .no-tap-highlight {
+    -webkit-tap-highlight-color: transparent;
+  }
+  .touch-none-safe {
+    touch-action: none;
+  }
+}

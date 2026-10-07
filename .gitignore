@@ -1,0 +1,17 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+tsconfig.tsbuildinfo
+
+# pdf.js assets copied in by scripts/copy-pdf-worker.mjs
+/public/pdf.worker.min.mjs
+/public/pdfjs/
+
+# misc
+.DS_Store
+*.log
+.env*.local
