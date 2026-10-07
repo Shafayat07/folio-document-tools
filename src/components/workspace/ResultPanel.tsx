@@ -1,7 +1,9 @@
 "use client";
 
-import { CheckCircle2, Download, Eye, FileText, PenLine, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { CheckCircle2, Download, Eye, FileText, PenLine, Plus, Share } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { canShareFile, prefersShareToSave } from "@/lib/export/download";
 import { formatBytes, pluralize } from "@/lib/core/utils";
 import type { OutputFile } from "@/lib/core/types";
 
@@ -19,6 +21,18 @@ export function ResultPanel({ outputs, onDownload, onDownloadAll, onPreview, onE
   const multiple = outputs.length > 1;
   const totalBytes = outputs.reduce((sum, output) => sum + output.blob.size, 0);
 
+  // Resolved after mount: `navigator` is unavailable during prerender, and the
+  // label has to match what the button will really do on this device.
+  const [saveMode, setSaveMode] = useState<"download" | "share">("download");
+  useEffect(() => {
+    if (!primary) return;
+    const shareable = canShareFile(primary.blob, primary.name);
+    setSaveMode(shareable && prefersShareToSave() ? "share" : "download");
+  }, [primary]);
+
+  const sharing = saveMode === "share";
+  const SaveIcon = sharing ? Share : Download;
+
   return (
     <div className="mx-auto max-w-2xl">
       <div className="rounded-lg border border-line bg-surface p-5 shadow-card sm:p-7">
@@ -31,8 +45,16 @@ export function ResultPanel({ outputs, onDownload, onDownloadAll, onPreview, onE
               {multiple ? `${outputs.length} files created` : "File created successfully"}
             </h2>
             <p className="mt-0.5 text-[13px] text-ink-500">
-              Ready to download. Nothing was uploaded — the file was built on your device.
+              {sharing
+                ? "Nothing was uploaded — the file was built on your device."
+                : "Ready to download. Nothing was uploaded — the file was built on your device."}
             </p>
+            {sharing ? (
+              <p className="mt-1.5 text-2xs leading-relaxed text-ink-400">
+                Saving opens the share sheet — choose <strong className="font-medium text-ink-500">Save to Files</strong> to
+                keep the PDF on your device.
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -62,8 +84,8 @@ export function ResultPanel({ outputs, onDownload, onDownloadAll, onPreview, onE
                 </Button>
               ) : null}
               <Button variant="secondary" size="sm" onClick={() => onDownload(output)}>
-                <Download className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Download</span>
+                <SaveIcon className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{sharing ? "Save" : "Download"}</span>
               </Button>
             </li>
           ))}
@@ -71,8 +93,12 @@ export function ResultPanel({ outputs, onDownload, onDownloadAll, onPreview, onE
 
         <div className="mt-5 flex flex-col gap-2 sm:flex-row">
           <Button variant="primary" size="lg" onClick={onDownloadAll} className="sm:flex-1">
-            <Download className="h-4 w-4" />
-            {multiple ? `Download all (${formatBytes(totalBytes)})` : `Download ${primary ? formatBytes(primary.blob.size) : ""}`}
+            <SaveIcon className="h-4 w-4" />
+            {sharing
+              ? `Save to Files (${formatBytes(totalBytes)})`
+              : multiple
+                ? `Download all (${formatBytes(totalBytes)})`
+                : `Download ${primary ? formatBytes(primary.blob.size) : ""}`}
           </Button>
           <Button variant="secondary" size="lg" onClick={onEditPages}>
             <PenLine className="h-4 w-4" />

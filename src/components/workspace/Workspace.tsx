@@ -416,11 +416,9 @@ export function Workspace({ tool }: { tool: ToolDefinition }) {
 
   const download = useCallback(
     (output: OutputFile) => {
-      try {
-        saveBlob(output.blob, output.name);
-      } catch (error) {
-        notifyError(error, "Download failed");
-      }
+      // Invoked straight from the click handler, with nothing awaited first:
+      // iOS only allows navigator.share inside the originating user gesture.
+      void saveBlob(output.blob, output.name).catch((error) => notifyError(error, "Could not save the file"));
     },
     [notifyError],
   );
