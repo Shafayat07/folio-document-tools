@@ -27,7 +27,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Progress } from "@/components/ui/Progress";
 import { useToast } from "@/components/ui/Toast";
 import { AppError } from "@/lib/core/errors";
-import { DEFAULT_PDF_SETTINGS, type OutputFile, type ProjectPage } from "@/lib/core/types";
+import { DEFAULT_PDF_SETTINGS, IMAGE_SIZE_EDGES, type OutputFile, type ProjectPage } from "@/lib/core/types";
 import { cn, pluralize, sanitizeFileName } from "@/lib/core/utils";
 import { saveBlob } from "@/lib/export/download";
 import { importFiles } from "@/lib/files/import";
@@ -361,7 +361,21 @@ export function Workspace({ tool }: { tool: ToolDefinition }) {
     try {
       let produced: OutputFile[];
 
-      if (tool.exportTarget === "jpg" || tool.exportTarget === "png") {
+      if (tool.exportTarget === "image-convert") {
+        produced = await exportPagesAsImages({
+          pages: exportPages,
+          files: fileMap,
+          format: settings.imageFormat,
+          quality: settings.quality,
+          compression: settings.compression,
+          baseName: settings.fileName,
+          // A converter should keep each file's own name and resolution.
+          naming: "source",
+          maxEdge: IMAGE_SIZE_EDGES[settings.imageSize],
+          onProgress,
+          signal: controller.signal,
+        });
+      } else if (tool.exportTarget === "jpg" || tool.exportTarget === "png") {
         produced = await exportPagesAsImages({
           pages: exportPages,
           files: fileMap,
@@ -755,7 +769,9 @@ export function Workspace({ tool }: { tool: ToolDefinition }) {
               <div className="rounded border border-line bg-surface p-4">
                 {primaryAction}
                 <p className="mt-2.5 text-center text-2xs text-ink-400">
-                  {pluralize(exportPages.length, "page")} will be exported
+                  {tool.exportTarget === "image-convert"
+                    ? `${pluralize(exportPages.length, "image")} will be converted`
+                    : `${pluralize(exportPages.length, "page")} will be exported`}
                 </p>
               </div>
             </div>
@@ -799,7 +815,11 @@ export function Workspace({ tool }: { tool: ToolDefinition }) {
           <div className="w-full max-w-sm rounded-lg border border-line bg-surface p-5 shadow-pop">
             <p className="flex items-center gap-2 text-sm font-semibold text-ink">
               <Loader2 className="h-4 w-4 animate-spin" />
-              {tool.exportTarget === "pdf" ? "Creating PDF" : "Exporting"}
+              {tool.exportTarget === "pdf"
+                ? "Creating PDF"
+                : tool.exportTarget === "image-convert"
+                  ? "Converting images"
+                  : "Exporting"}
             </p>
             <div className="mt-4">
               <Progress value={progress.value} label={progress.label} />

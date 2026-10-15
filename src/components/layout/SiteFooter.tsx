@@ -4,7 +4,8 @@ import { TOOLS } from "@/lib/tools/registry";
 
 export function SiteFooter() {
   const imageTools = TOOLS.filter((tool) => tool.category === "image").slice(0, 5);
-  const pdfTools = TOOLS.filter((tool) => tool.category === "pdf").slice(0, 6);
+  const pdfTools = TOOLS.filter((tool) => tool.category === "pdf").slice(0, 5);
+  const convertTools = TOOLS.filter((tool) => tool.category === "convert").slice(0, 5);
 
   return (
     <footer className="mt-auto border-t border-line bg-surface">
@@ -46,19 +47,16 @@ export function SiteFooter() {
           </ul>
         </nav>
 
-        <nav aria-label="More">
-          <p className="text-2xs font-semibold uppercase tracking-wide text-ink-400">More</p>
+        <nav aria-label="Converters">
+          <p className="text-2xs font-semibold uppercase tracking-wide text-ink-400">Convert formats</p>
           <ul className="mt-3 space-y-1.5">
-            <li>
-              <Link href="/pdf-tools" className="text-[13px] text-ink-500 hover:text-ink hover:underline">
-                All PDF tools
-              </Link>
-            </li>
-            <li>
-              <Link href="/converters" className="text-[13px] text-ink-500 hover:text-ink hover:underline">
-                Converters
-              </Link>
-            </li>
+            {convertTools.map((tool) => (
+              <li key={tool.slug}>
+                <Link href={`/tools/${tool.slug}`} className="text-[13px] text-ink-500 hover:text-ink hover:underline">
+                  {tool.title}
+                </Link>
+              </li>
+            ))}
             <li>
               <Link href="/about" className="text-[13px] text-ink-500 hover:text-ink hover:underline">
                 About &amp; privacy

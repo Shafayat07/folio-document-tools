@@ -16,6 +16,11 @@ export default function HomePage() {
           description="Build PDFs from photos, scans and exported images."
         />
         <ToolGrid tools={toolsByCategory("pdf")} title="PDF tools" description="Convert, split, merge and reorganise existing PDFs." />
+        <ToolGrid
+          tools={toolsByCategory("convert")}
+          title="Convert file formats"
+          description="Change images between PNG, JPG and WEBP, or shrink them for email and upload."
+        />
       </div>
     </>
   );

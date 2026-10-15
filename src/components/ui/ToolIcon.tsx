@@ -8,6 +8,8 @@ import {
   Images,
   Layers,
   LayoutGrid,
+  Minimize2,
+  Repeat,
   RotateCw,
   Scissors,
   Trash2,
@@ -27,6 +29,8 @@ const MAP: Record<ToolIconName, React.ComponentType<{ className?: string; stroke
   trash: Trash2,
   "file-output": FileOutput,
   camera: Camera,
+  repeat: Repeat,
+  shrink: Minimize2,
 };
 
 export function ToolIcon({ name, className }: { name: ToolIconName; className?: string }) {

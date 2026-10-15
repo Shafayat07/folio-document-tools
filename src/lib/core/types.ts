@@ -94,6 +94,25 @@ export type MarginId = "none" | "small" | "medium" | "large";
 export type QualityId = "standard" | "high" | "maximum";
 export type CompressionId = "none" | "balanced" | "high";
 
+/** Output formats the browser can encode to. */
+export type ImageFormatId = "png" | "jpeg" | "webp";
+
+export type ImageSizeId = "original" | "large" | "medium" | "small";
+
+/** Longest-edge budget per size preset; `null` keeps the source resolution. */
+export const IMAGE_SIZE_EDGES: Record<ImageSizeId, number | null> = {
+  original: null,
+  large: 2560,
+  medium: 1600,
+  small: 1024,
+};
+
+export const IMAGE_FORMAT_META: Record<ImageFormatId, { label: string; ext: string; mime: string; lossy: boolean }> = {
+  png: { label: "PNG", ext: "png", mime: "image/png", lossy: false },
+  jpeg: { label: "JPG", ext: "jpg", mime: "image/jpeg", lossy: true },
+  webp: { label: "WEBP", ext: "webp", mime: "image/webp", lossy: true },
+};
+
 export interface PdfSettings {
   pageSize: PageSizeId;
   orientation: OrientationId;
@@ -102,6 +121,9 @@ export interface PdfSettings {
   quality: QualityId;
   compression: CompressionId;
   fileName: string;
+  /** Used by the image-conversion tools. */
+  imageFormat: ImageFormatId;
+  imageSize: ImageSizeId;
 }
 
 export const DEFAULT_PDF_SETTINGS: PdfSettings = {
@@ -112,6 +134,8 @@ export const DEFAULT_PDF_SETTINGS: PdfSettings = {
   quality: "high",
   compression: "balanced",
   fileName: "document",
+  imageFormat: "png",
+  imageSize: "original",
 };
 
 /** Page dimensions in PDF points (72 per inch). */

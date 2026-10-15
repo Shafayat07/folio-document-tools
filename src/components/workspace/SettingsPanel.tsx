@@ -8,6 +8,8 @@ import { estimateOutputSize } from "@/lib/pdf/generate";
 import type {
   CompressionId,
   FitId,
+  ImageFormatId,
+  ImageSizeId,
   MarginId,
   OrientationId,
   PageSizeId,
@@ -38,6 +40,13 @@ const COMPRESSION_OPTIONS: Array<{ value: CompressionId; label: string }> = [
   { value: "high", label: "High compression" },
 ];
 
+const IMAGE_SIZE_OPTIONS: Array<{ value: ImageSizeId; label: string }> = [
+  { value: "original", label: "Original size" },
+  { value: "large", label: "Large — max 2560 px" },
+  { value: "medium", label: "Medium — max 1600 px" },
+  { value: "small", label: "Small — max 1024 px" },
+];
+
 export interface SettingsPanelProps {
   tool: ToolDefinition;
   settings: PdfSettings;
@@ -49,20 +58,48 @@ export interface SettingsPanelProps {
 }
 
 export function SettingsPanel({ tool, settings, onChange, pages, files, busy }: SettingsPanelProps) {
-  const estimate = useEstimatedSize(settings, pages, files, !busy);
+  const converting = tool.exportTarget === "image-convert";
+  const estimate = useEstimatedSize(settings, pages, files, !busy && !converting);
   const exportsImages = tool.exportTarget === "jpg" || tool.exportTarget === "png";
+  // Converted files keep their own names, so a base name would be ignored.
+  const lossy = settings.imageFormat !== "png";
 
   return (
     <div className="space-y-5">
-      <Field label="File name" hint={exportsImages ? "used for each image" : ".pdf"}>
-        <TextInput
-          value={settings.fileName}
-          onChange={(event) => onChange({ fileName: event.target.value })}
-          placeholder="document"
-          maxLength={80}
-          spellCheck={false}
-        />
-      </Field>
+      {converting ? (
+        <>
+          <Field label="Convert to">
+            <Segmented<ImageFormatId>
+              value={settings.imageFormat}
+              onValueChange={(imageFormat) => onChange({ imageFormat })}
+              options={[
+                { value: "png", label: "PNG", title: "Lossless, larger files" },
+                { value: "jpeg", label: "JPG", title: "Smaller, no transparency" },
+                { value: "webp", label: "WEBP", title: "Smallest, modern browsers" },
+              ]}
+              size="sm"
+            />
+          </Field>
+
+          <Field label="Resize" hint={settings.imageSize === "original" ? "keeps resolution" : undefined}>
+            <Select<ImageSizeId>
+              value={settings.imageSize}
+              onValueChange={(imageSize) => onChange({ imageSize })}
+              options={IMAGE_SIZE_OPTIONS}
+            />
+          </Field>
+        </>
+      ) : (
+        <Field label="File name" hint={exportsImages ? "used for each image" : ".pdf"}>
+          <TextInput
+            value={settings.fileName}
+            onChange={(event) => onChange({ fileName: event.target.value })}
+            placeholder="document"
+            maxLength={80}
+            spellCheck={false}
+          />
+        </Field>
+      )}
 
       {tool.showPageSetup ? (
         <>
@@ -116,22 +153,38 @@ export function SettingsPanel({ tool, settings, onChange, pages, files, busy }: 
         </>
       ) : null}
 
-      <Field label="Image quality">
-        <Select<QualityId> value={settings.quality} onValueChange={(quality) => onChange({ quality })} options={QUALITY_OPTIONS} />
-      </Field>
+      {/* PNG is lossless, so the quality dials would do nothing. */}
+      {!converting || lossy ? (
+        <>
+          <Field label="Image quality">
+            <Select<QualityId>
+              value={settings.quality}
+              onValueChange={(quality) => onChange({ quality })}
+              options={QUALITY_OPTIONS}
+            />
+          </Field>
 
-      <Field label="Compression">
-        <Select<CompressionId>
-          value={settings.compression}
-          onValueChange={(compression) => onChange({ compression })}
-          options={COMPRESSION_OPTIONS}
-        />
-      </Field>
+          <Field label="Compression">
+            <Select<CompressionId>
+              value={settings.compression}
+              onValueChange={(compression) => onChange({ compression })}
+              options={COMPRESSION_OPTIONS}
+            />
+          </Field>
+        </>
+      ) : null}
 
       <div className="rounded border border-line bg-subtle p-3">
         <p className="flex items-start gap-2 text-2xs leading-relaxed text-ink-500">
           <Info className="mt-px h-3.5 w-3.5 shrink-0 text-ink-400" />
-          {estimate.state === "ready" && estimate.bytes !== null ? (
+          {converting ? (
+            <span>
+              Each file keeps its own name with a <strong className="font-semibold text-ink">.{settings.imageFormat === "jpeg" ? "jpg" : settings.imageFormat}</strong>{" "}
+              extension.{" "}
+              {pages.length > 1 ? "Multiple files are bundled into a .zip. " : ""}
+              {!lossy ? "PNG is lossless, so quality settings do not apply." : "Converting is done on your device."}
+            </span>
+          ) : estimate.state === "ready" && estimate.bytes !== null ? (
             <span>
               Estimated output <strong className="font-semibold text-ink">~{formatBytes(estimate.bytes)}</strong> for{" "}
               {pages.length} {pages.length === 1 ? "page" : "pages"}. The real size depends on page content.

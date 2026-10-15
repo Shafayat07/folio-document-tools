@@ -106,6 +106,31 @@ export async function canvasToBlob(canvas: AnyCanvas, mime = "image/jpeg", quali
   return blob;
 }
 
+/**
+ * Whether this browser can actually *encode* a MIME type. Canvas silently
+ * falls back to PNG for unsupported types, which would otherwise produce a
+ * file named `.webp` that is really a PNG.
+ */
+const encodeSupport = new Map<string, Promise<boolean>>();
+export function canEncode(mime: string): Promise<boolean> {
+  const cached = encodeSupport.get(mime);
+  if (cached) return cached;
+
+  const probe = (async () => {
+    try {
+      const canvas = createCanvas(2, 2);
+      const blob = await canvasToBlob(canvas, mime, 0.8);
+      releaseCanvas(canvas);
+      return blob.type === mime;
+    } catch {
+      return false;
+    }
+  })();
+
+  encodeSupport.set(mime, probe);
+  return probe;
+}
+
 export function canvasToDataUrl(canvas: AnyCanvas, mime = "image/jpeg", quality = 0.8): string {
   if (typeof OffscreenCanvas !== "undefined" && canvas instanceof OffscreenCanvas) {
     throw new AppError("render-failed", "Export failed", "Data URLs are not available for offscreen canvases.");
